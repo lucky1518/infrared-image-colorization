@@ -1,5 +1,5 @@
-
 import os
+import sys
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -7,24 +7,66 @@ from torch.utils.data import DataLoader
 from generator import Generator
 from discriminator import Discriminator
 
-import sys
-sys.path.append("../colorization")
+# ---------------------------------
+# Fix Import Path
+# ---------------------------------
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+COLORIZATION_DIR = os.path.join(
+    CURRENT_DIR,
+    "..",
+    "colorization"
+)
+
+sys.path.append(COLORIZATION_DIR)
 
 from dataset import LandsatDataset
 
-# -------------------
-# Folders
-# -------------------
+# ---------------------------------
+# Models Folder
+# ---------------------------------
 
-os.makedirs("models", exist_ok=True)
+MODELS_DIR = os.path.join(
+    CURRENT_DIR,
+    "..",
+    "..",
+    "models"
+)
 
-# -------------------
+os.makedirs(MODELS_DIR, exist_ok=True)
+
+# ---------------------------------
+# Dataset Paths
+# ---------------------------------
+
+INPUT_DIR = os.path.join(
+    CURRENT_DIR,
+    "..",
+    "..",
+    "data",
+    "processed",
+    "train",
+    "input"
+)
+
+RGB_DIR = os.path.join(
+    CURRENT_DIR,
+    "..",
+    "..",
+    "data",
+    "processed",
+    "train",
+    "rgb"
+)
+
+# ---------------------------------
 # Dataset
-# -------------------
+# ---------------------------------
 
 dataset = LandsatDataset(
-    "../../data/processed/train/input",
-    "../../data/processed/train/rgb"
+    INPUT_DIR,
+    RGB_DIR
 )
 
 print("=" * 50)
@@ -37,9 +79,9 @@ loader = DataLoader(
     shuffle=True
 )
 
-# -------------------
+# ---------------------------------
 # Device
-# -------------------
+# ---------------------------------
 
 device = torch.device(
     "cuda" if torch.cuda.is_available() else "cpu"
@@ -47,23 +89,23 @@ device = torch.device(
 
 print("Using Device:", device)
 
-# -------------------
+# ---------------------------------
 # Models
-# -------------------
+# ---------------------------------
 
 G = Generator().to(device)
 D = Discriminator().to(device)
 
-# -------------------
-# Losses
-# -------------------
+# ---------------------------------
+# Loss Functions
+# ---------------------------------
 
 gan_loss = nn.BCEWithLogitsLoss()
 l1_loss = nn.L1Loss()
 
-# -------------------
+# ---------------------------------
 # Optimizers
-# -------------------
+# ---------------------------------
 
 opt_G = torch.optim.Adam(
     G.parameters(),
@@ -77,9 +119,9 @@ opt_D = torch.optim.Adam(
     betas=(0.5, 0.999)
 )
 
-# -------------------
+# ---------------------------------
 # Training
-# -------------------
+# ---------------------------------
 
 EPOCHS = 20
 
@@ -92,9 +134,9 @@ for epoch in range(EPOCHS):
         inputs = inputs.to(device)
         targets = targets.to(device)
 
-        # -------------------
+        # -------------------------
         # Train Generator
-        # -------------------
+        # -------------------------
 
         fake = G(inputs)
 
@@ -118,9 +160,9 @@ for epoch in range(EPOCHS):
         g_loss.backward()
         opt_G.step()
 
-        # -------------------
+        # -------------------------
         # Train Discriminator
-        # -------------------
+        # -------------------------
 
         pred_real = D(
             inputs,
@@ -159,16 +201,21 @@ for epoch in range(EPOCHS):
         f"D Loss: {d_loss.item():.4f}"
     )
 
-# -------------------
+# ---------------------------------
 # Save Model
-# -------------------
+# ---------------------------------
+
+MODEL_PATH = os.path.join(
+    MODELS_DIR,
+    "pix2pix_generator.pth"
+)
 
 torch.save(
     G.state_dict(),
-    "models/pix2pix_generator.pth"
+    MODEL_PATH
 )
 
 print("\n=================================")
 print("Pix2Pix Training Completed!")
-print("Model Saved")
+print(f"Model Saved: {MODEL_PATH}")
 print("=================================")
