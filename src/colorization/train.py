@@ -27,7 +27,7 @@ loader = DataLoader(
 )
 
 # Device
-device = torch.device("cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print("Using Device:", device)
 

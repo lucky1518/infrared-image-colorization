@@ -23,11 +23,11 @@ model.eval()
 
 # Load images
 inp = cv2.imread(
-    "../../data/processed/train/input/input_0.png"
+    "data/processed/train/input/input_318.png"
 )
 
 gt = cv2.imread(
-    "../../data/processed/train/rgb/rgb_0.png"
+    "data/processed/train/rgb/rgb_318.png"
 )
 
 # Prepare tensor
