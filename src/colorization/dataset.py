@@ -6,12 +6,17 @@ from torch.utils.data import Dataset
 
 class LandsatDataset(Dataset):
 
-    def __init__(self, input_dir, rgb_dir):
+    def __init__(
+        self,
+        input_dir,
+        rgb_dir,
+        mode="zero_one"
+    ):
 
         self.input_dir = input_dir
         self.rgb_dir = rgb_dir
+        self.mode = mode
 
-        # Load all .npy input files
         self.input_images = sorted(
             [
                 f for f in os.listdir(input_dir)
@@ -24,24 +29,47 @@ class LandsatDataset(Dataset):
 
     def __getitem__(self, idx):
 
-        # Input file
         input_name = self.input_images[idx]
-
-        # Matching RGB file
         rgb_name = input_name.replace("input", "rgb")
 
-        input_path = os.path.join(self.input_dir, input_name)
-        rgb_path = os.path.join(self.rgb_dir, rgb_name)
+        input_path = os.path.join(
+            self.input_dir,
+            input_name
+        )
 
-        # Load NPY files
-        input_img = np.load(input_path).astype(np.float32)
-        rgb_img = np.load(rgb_path).astype(np.float32)
+        rgb_path = os.path.join(
+            self.rgb_dir,
+            rgb_name
+        )
 
-        # Normalize each patch to [0,1]
+        input_img = np.load(
+            input_path
+        ).astype(np.float32)
+
+        rgb_img = np.load(
+            rgb_path
+        ).astype(np.float32)
+
+        # ----------------------------
+        # Normalize to 0-1
+        # ----------------------------
+
         input_img = input_img / input_img.max()
         rgb_img = rgb_img / rgb_img.max()
 
-        # Convert HWC -> CHW
+        # ----------------------------
+        # Optional tanh normalization
+        # ----------------------------
+
+        if self.mode == "tanh":
+
+            input_img = input_img * 2.0 - 1.0
+            rgb_img = rgb_img * 2.0 - 1.0
+
+        # ----------------------------
+        # Convert to Tensor
+        # ----------------------------
+
         input_img = torch.from_numpy(
             input_img.transpose(2, 0, 1)
         )

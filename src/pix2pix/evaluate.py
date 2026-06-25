@@ -1,7 +1,6 @@
 import os
-import cv2
-import torch
 import numpy as np
+import torch
 
 from skimage.metrics import (
     peak_signal_noise_ratio,
@@ -30,9 +29,9 @@ INPUT_IMAGE = os.path.join(
     "..",
     "data",
     "processed",
-    "train",
+    "train_npy",
     "input",
-    "input_0.png"
+    "input_0.npy"
 )
 
 GROUND_TRUTH = os.path.join(
@@ -41,9 +40,9 @@ GROUND_TRUTH = os.path.join(
     "..",
     "data",
     "processed",
-    "train",
+    "train_npy",
     "rgb",
-    "rgb_0.png"
+    "rgb_0.npy"
 )
 
 # ---------------------------------
@@ -74,54 +73,37 @@ model.eval()
 print("Model Loaded")
 
 # ---------------------------------
-# Load Images
+# Load NPY Images
 # ---------------------------------
 
-inp = cv2.imread(INPUT_IMAGE)
+inp = np.load(INPUT_IMAGE).astype(np.float32)
+gt = np.load(GROUND_TRUTH).astype(np.float32)
 
-gt = cv2.imread(GROUND_TRUTH)
+# Normalize to 0-1
+inp = inp / inp.max()
+gt = gt / gt.max()
 
-if inp is None:
-    raise FileNotFoundError(
-        f"Input image not found: {INPUT_IMAGE}"
-    )
-
-if gt is None:
-    raise FileNotFoundError(
-        f"Ground truth image not found: {GROUND_TRUTH}"
-    )
-
-gt = cv2.cvtColor(
-    gt,
-    cv2.COLOR_BGR2RGB
-) / 255.0
+# Convert input to tanh range
+inp = inp * 2.0 - 1.0
 
 # ---------------------------------
 # Prepare Input
 # ---------------------------------
 
-x = inp / 255.0
-
-x = torch.tensor(
-    x,
-    dtype=torch.float32
-).permute(2, 0, 1)
-
+x = torch.from_numpy(inp).permute(2, 0, 1)
 x = x.unsqueeze(0).to(device)
 
 # ---------------------------------
-# Generate Prediction
+# Prediction
 # ---------------------------------
 
 with torch.no_grad():
     pred = model(x)
 
-pred = pred.squeeze().cpu()
+pred = pred.squeeze().cpu().permute(1, 2, 0).numpy()
 
-pred = pred.permute(1, 2, 0).numpy()
-
-pred = (pred + 1) / 2
-
+# Convert back from tanh
+pred = (pred + 1.0) / 2.0
 pred = np.clip(pred, 0, 1)
 
 # ---------------------------------

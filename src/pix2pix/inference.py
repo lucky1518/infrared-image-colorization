@@ -1,5 +1,5 @@
 import os
-import cv2
+import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
@@ -25,9 +25,9 @@ IMAGE_PATH = os.path.join(
     "..",
     "data",
     "processed",
-    "train",
+    "train_npy",
     "input",
-    "input_0.png"
+    "input_0.npy"
 )
 
 OUTPUT_PATH = os.path.join(
@@ -63,23 +63,18 @@ model.eval()
 print("Model Loaded")
 
 # ---------------------------------
-# Load Image
+# Load NPY Image
 # ---------------------------------
 
-img = cv2.imread(IMAGE_PATH)
+img = np.load(IMAGE_PATH).astype(np.float32)
 
-if img is None:
-    raise FileNotFoundError(
-        f"Image not found: {IMAGE_PATH}"
-    )
+# Normalize to 0-1
+img = img / img.max()
 
-img = img / 255.0
+# Convert to tanh range (-1 to 1)
+img = img * 2.0 - 1.0
 
-tensor = torch.tensor(
-    img,
-    dtype=torch.float32
-).permute(2, 0, 1)
-
+tensor = torch.from_numpy(img).permute(2, 0, 1)
 tensor = tensor.unsqueeze(0).to(device)
 
 # ---------------------------------
@@ -89,11 +84,11 @@ tensor = tensor.unsqueeze(0).to(device)
 with torch.no_grad():
     output = model(tensor)
 
-pred = output.squeeze().cpu()
+pred = output.squeeze().cpu().permute(1, 2, 0).numpy()
 
-pred = pred.permute(1, 2, 0).numpy()
-
-pred = (pred + 1) / 2
+# Convert back from [-1,1] to [0,1]
+pred = (pred + 1.0) / 2.0
+pred = np.clip(pred, 0, 1)
 
 # ---------------------------------
 # Save Output
@@ -102,7 +97,11 @@ pred = (pred + 1) / 2
 plt.figure(figsize=(8, 8))
 plt.imshow(pred)
 plt.axis("off")
-plt.savefig(OUTPUT_PATH)
+plt.savefig(
+    OUTPUT_PATH,
+    bbox_inches="tight",
+    pad_inches=0
+)
 plt.show()
 
 print(f"Saved: {OUTPUT_PATH}")

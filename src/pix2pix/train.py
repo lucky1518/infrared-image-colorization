@@ -37,7 +37,7 @@ MODELS_DIR = os.path.join(
 os.makedirs(MODELS_DIR, exist_ok=True)
 
 # ---------------------------------
-# Dataset Paths
+# Dataset Paths (NPY)
 # ---------------------------------
 
 INPUT_DIR = os.path.join(
@@ -46,7 +46,7 @@ INPUT_DIR = os.path.join(
     "..",
     "data",
     "processed",
-    "train",
+    "train_npy",
     "input"
 )
 
@@ -56,22 +56,27 @@ RGB_DIR = os.path.join(
     "..",
     "data",
     "processed",
-    "train",
+    "train_npy",
     "rgb"
 )
 
 # ---------------------------------
-# Dataset
+# Dataset (Tanh Normalization)
 # ---------------------------------
 
 dataset = LandsatDataset(
     INPUT_DIR,
-    RGB_DIR
+    RGB_DIR,
+    mode="tanh"
 )
 
 print("=" * 50)
 print("Dataset Size:", len(dataset))
 print("=" * 50)
+
+# ---------------------------------
+# Data Loader
+# ---------------------------------
 
 loader = DataLoader(
     dataset,
@@ -187,9 +192,7 @@ for epoch in range(EPOCHS):
             fake_label
         )
 
-        d_loss = (
-            d_real + d_fake
-        ) / 2
+        d_loss = (d_real + d_fake) / 2
 
         opt_D.zero_grad()
         d_loss.backward()

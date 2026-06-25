@@ -6,47 +6,78 @@ from torch.utils.data import DataLoader
 from dataset import LandsatDataset
 from model import UNet
 
-# Create models folder if missing
+# ---------------------------------
+# Create Models Folder
+# ---------------------------------
+
 os.makedirs("models", exist_ok=True)
 
-# Dataset (NPY Training Data)
+# ---------------------------------
+# Dataset (NPY + Zero-One Normalization)
+# ---------------------------------
+
 dataset = LandsatDataset(
     "data/processed/train_npy/input",
-    "data/processed/train_npy/rgb"
+    "data/processed/train_npy/rgb",
+    mode="zero_one"
 )
 
 print("=" * 50)
 print("Dataset Size:", len(dataset))
 print("=" * 50)
 
+# ---------------------------------
 # Data Loader
+# ---------------------------------
+
 loader = DataLoader(
     dataset,
     batch_size=4,
     shuffle=True
 )
 
+# ---------------------------------
 # Device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# ---------------------------------
+
+device = torch.device(
+    "cuda" if torch.cuda.is_available() else "cpu"
+)
 
 print("Using Device:", device)
 
+# ---------------------------------
 # Model
+# ---------------------------------
+
 model = UNet().to(device)
 
+# ---------------------------------
 # Loss Function
+# ---------------------------------
+
 criterion = nn.MSELoss()
 
+# ---------------------------------
 # Optimizer
+# ---------------------------------
+
 optimizer = torch.optim.Adam(
     model.parameters(),
     lr=0.001
 )
 
+# ---------------------------------
 # Training Parameters
+# ---------------------------------
+
 EPOCHS = 20
 
 print("\nTraining Started...\n")
+
+# ---------------------------------
+# Training Loop
+# ---------------------------------
 
 for epoch in range(EPOCHS):
 
@@ -62,9 +93,7 @@ for epoch in range(EPOCHS):
         loss = criterion(outputs, targets)
 
         optimizer.zero_grad()
-
         loss.backward()
-
         optimizer.step()
 
         running_loss += loss.item()
@@ -72,17 +101,22 @@ for epoch in range(EPOCHS):
     avg_loss = running_loss / len(loader)
 
     print(
-        f"Epoch [{epoch+1}/{EPOCHS}] "
+        f"Epoch [{epoch + 1}/{EPOCHS}] "
         f"Average Loss: {avg_loss:.6f}"
     )
 
+# ---------------------------------
 # Save Model
+# ---------------------------------
+
+MODEL_PATH = "models/unet.pth"
+
 torch.save(
     model.state_dict(),
-    "models/unet.pth"
+    MODEL_PATH
 )
 
 print("\n=================================")
 print("Training Completed Successfully!")
-print("Model Saved: models/unet.pth")
+print(f"Model Saved: {MODEL_PATH}")
 print("=================================")
