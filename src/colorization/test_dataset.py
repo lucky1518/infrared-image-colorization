@@ -1,8 +1,8 @@
 from dataset import LandsatDataset
 
 dataset = LandsatDataset(
-    "data/processed/train/input",
-    "data/processed/train/rgb"
+    "data/processed/train_npy/input",
+    "data/processed/train_npy/rgb"
 )
 
 print("Dataset Size:", len(dataset))

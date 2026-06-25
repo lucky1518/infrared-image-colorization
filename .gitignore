@@ -7,4 +7,13 @@ outputs/
 
 *.pth
 
-.env  
+.env
+
+# Generated training dataset
+data/processed/train_npy/
+
+# Temporary audit files
+audit_npy.py
+check_npy.py
+project_structure.txt
+tif_files.txt

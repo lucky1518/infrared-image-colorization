@@ -9,10 +9,10 @@ from model import UNet
 # Create models folder if missing
 os.makedirs("models", exist_ok=True)
 
-# Dataset
+# Dataset (NPY Training Data)
 dataset = LandsatDataset(
-    "data/processed/train/input",
-    "data/processed/train/rgb"
+    "data/processed/train_npy/input",
+    "data/processed/train_npy/rgb"
 )
 
 print("=" * 50)
@@ -22,7 +22,7 @@ print("=" * 50)
 # Data Loader
 loader = DataLoader(
     dataset,
-    batch_size=4,      # Increased from 2
+    batch_size=4,
     shuffle=True
 )
 
